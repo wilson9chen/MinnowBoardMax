@@ -1,0 +1,752 @@
+﻿================================================================================
+MinnowBoard Max/Turbot 1.00 UEFI Firmware Open Source Release 
+Nov 16th, 2018
+================================================================================
+
+================================================================================
+                                  DISCLAIMER
+================================================================================
+This release note as well as the software described in it is furnished under license
+and may only be used or copied in accordance with the terms of the license. The
+information in this manual is furnished for informational use only, is subject to
+change without notice, and should not be construed as a commitment by Intel Corporation.
+Intel Corporation assumes no responsibility or liability for any errors or inaccuracies
+that may appear in this document or any software that may be provided in association
+with this document.
+Except as permitted by such license, no part of this document may be reproduced,
+stored in a retrieval system, or transmitted in any form or by any means without
+the express written consent of Intel Corporation.
+
+================================================================================
+                               ADDITIONAL DISCLAIMER
+================================================================================
+This release is targeted at a UEFI firmware open source release for the MinnowBoard
+Max/Turbot platforms using the Intel(R) Atom(tm) Processor E3800 Series. Please
+refer to "NEW FEATURES AND CHANGES IN RELEASE" section for new features in this
+release. Please refer to "SECURITY RECOMMENDATIONS" section for platform security
+enhancement.
+
+================================================================================
+                                    INDEX 
+================================================================================
+1.  FILES LIST
+2.  HOW TO CREATE A FULL SOURCE TREE
+3.  HOW TO BUILD (WINDOWS ENVIRONMENT)
+4.  HOW TO BUILD USING THE INTEL(R) FIRMWARE SUPPORT PACKAGE (INTEL(R) FSP)
+    (WINDOWS ENVIRONMENT, OPTIONAL)
+5.  HOW TO BUILD (LINUX ENVIRONMENT)
+6.  TEST ENVIRONMENT
+7.  SUPPORTED (NEW) FEATURES AND CHANGES IN RELEASE
+8.  KNOWN ISSUES
+9.  SECURITY RECOMMENDATIONS
+10. HOW TO UPDATE THE PLATFORM BIOS FIRMWARE IMAGE
+11. HOW TO CONFIGURE THE PLATFORM FOR DIFFERENT OPTIONS
+12. INTEL(R) FSP AND THE BINARY INTEGRATED PLATFORM INITIALIZATION CODE MODULES
+13. MISCELLANEOUS
+
+================================================================================
+1.                                FILES LIST
+================================================================================
+1. MinnowBoard_MAX-Rel_1_00-ReleaseNotes.txt
+   Release notes for MinnowBoard Max/Turbot 1.00 UEFI firmware open source release.
+   (this document)
+
+2. MinnowBoard_MAX-1.00-Binary.Objects.zip
+   MinnowBoard MAX 1.00 Binary Object Modules of Intel silicon reference code.
+
+3. MinnowBoard_MAX-Rel_1_00-Firmware.Images.zip
+   Pre-built UEFI firmware images and flash update utilities.
+
+================================================================================
+2.                           HOW TO CREATE A FULL SOURCE TREE
+================================================================================
+1) Create a new folder (directory) on the root of your local hard drive (development
+   machine) for use as your work space (this example uses "C:\MyWorkspace").
+   Some paths are very long and placing the working directory too deep in the directory 
+   structure may cause the path to be longer than Windows maximum path length.
+
+2) Checkout edk2 from GitHub with the following command.
+    i)  Run "git clone https://github.com/tianocore/edk2.git -b UDK2017"
+   ii)  Enter folder edk2
+  iii)  Run the command "git checkout vUDK2017"
+   iv)  Enter folder "C:\MyWorkspace"
+
+3) Checkout MinnowBoard Max Branch from GitHub with the following command.
+    i)  Run "git clone https://github.com/tianocore/edk2-platforms.git -b devel-MinnowBoardMax-UDK2017"
+   ii)  Enter folder edk2-platforms
+  iii)  Run the command "git checkout 2a5f80b862e46de213a3f3635c43394deacdfb05"
+   iv)  Enter folder "C:\MyWorkspace"
+
+4) Checkout BaseTools binaries and copy them to BaseTools binary folder.
+    i)  Run "git clone https://github.com/tianocore/edk2-BaseTools-win32.git"
+   ii)  Enter folder edk2-BaseTools-win32
+  iii)  Run the command "git checkout 0e088c19ab31fccd1d2f55d9e4fe0314b57c0097"
+
+5) Download MinnowBoard MAX 1.00 Binary Object Modules from http://firmware.intel.com/projects/minnowboard-max.
+   The "MinnowBoard_MAX-1.00-Binary.Objects.zip" file contains three additional
+   folders required for the full source tree.
+
+    IA32FamilyCpuPkg
+    Vlv2BinaryPkg
+    Vlv2MiscBinariesPkg
+
+   Create a new directory named "silicon" below WORKSPACE (e.g. "C:\MyWorkspace\silicon").
+   Unzip and copy the three folders to the "silicon" directory (e.g. "C:\MyWorkspace\silicon\").
+
+SUMMARY
+
+Directory structure will be as follows after downloading source:
+   C:/MyWorkspace
+    --- \edk2
+    (directories from vUDK2017)
+    --- \edk2-platforms
+    Vlv2DeviceRefCodePkg
+    Vlv2TbltDeviceePkg 	<-------- invoke Build script Here
+    --- \edk2-BaseTools-win32
+    (Windows Binary Base Tools)
+    --- \silicon
+    (Step 5. above)
+
+
+================================================================================
+3.                           HOW TO BUILD (WINDOWS ENVIRONMENT)
+================================================================================
+Windows System Configuration:
+  Microsoft Windows 10 Enterprise 64-bit*
+
+   Note: Below steps could also apply to Microsoft Windows 8.1 and other version of Windows 10,
+         but Intel only verify these steps on Microsoft Windows 10 Enterprise 64-bit*.
+
+1. Setup Build Environment
+   1) Install C compiler Microsoft Visual Studio 2015 with Update 3 in the build machine
+
+      Note: Visual Studio 2008, 2010, 2012 and 2013 are also supported, but Intel only verify
+            with VS2015.
+
+   2) Obtain and install Python 2.7.10 from: https://www.python.org/downloads/release/python-2710/
+      Make sure that a file with the extension of ".py" will be opened by Python.exe.
+
+2. Extract Source Code
+   1) Follow the instructions of "HOW TO CREATE A FULL SOURCE TREE" (step 2 above)
+      to create a full source tree.
+
+   2) Follow the instructions found in the file "OpenSSL-HOWTO.txt" located in your
+      workspace (e.g. "C:\MyWorkspace\edk2\CryptoPkg\Library\OpensslLib\OpenSSL-HOWTO.txt")
+      to install the Openssl source code.
+
+3. Install the iasl compiler by downloading iasl-win-20160527.zip from the following
+   location: "https://acpica.org/downloads/" and place the unzipped
+   content ("iasl.exe") into the directory "C:\ASL" on your local hard drive
+   (create the folder "C:\ASL" if it does not exist).
+
+4. Install the NASM* assembly language compiler:
+   Download NASM* 2.12.02 binaries from 
+   http://www.nasm.us/pub/nasm/releasebuilds/2.12.02/win64/nasm-2.12.02-win64.zip and place the
+   unzipped content ("nasm.exe") into the directory "C:\NASM" on your local hard drive
+   (create the folder "C:\NASM" if it does not exist).
+
+5. Download a pre-compiled Openssl Windows binary from 
+   https://wiki.openssl.org/index.php/Binaries. Search for a Windows binary in the list 
+   of "Third Party OpenSSL Related Binary Distributions". Go to the third party site to 
+   download the latest version. Download and extract to C:\Openssl, add the path of openssl.exe 
+   ("C:\openssl") to system environment variable OPENSSL_PATH.
+
+6a. Build Steps (32-bit)
+   1) To build a 32-bit release version
+      Open a command prompt of Microsoft Visual Studio, such as "Developer Command
+      Prompt for VS2015";
+      Type the command: "cd C:\MyWorkspace\edk2-platforms\Vlv2TbltDevicePkg";
+      Type the command "Build_IFWI.bat /IA32 MNW2 Release" to build a release version.
+
+   2) To build a 32-bit debug version
+      Open a command prompt of Microsoft Visual Studio, such as "Developer Command
+      Prompt for VS2015";
+      Type the command: "cd C:\MyWorkspace\edk2-platforms\Vlv2TbltDevicePkg";
+      Type command "Build_IFWI.bat /IA32 MNW2 Debug" to build a debug version.
+
+   3) After the build successfully completes, the 8MB firmware binary image will
+      be located in the following location on your local hard drive:
+      "C:\MyWorkspace\edk2-platforms\Vlv2TbltDevicePkg\Stitch\"
+
+6b. Build Steps (64-bit)
+   1) To build a 64-bit release version
+      Open a command prompt of Microsoft Visual Studio, such as "Developer Command
+      Prompt for VS2015";
+      Type the command: "cd C:\MyWorkspace\edk2-platforms\Vlv2TbltDevicePkg";
+      Type the command "Build_IFWI.bat MNW2 Release" to build a release version.
+
+   2) To build a 64-bit debug version
+      Open a command prompt of Microsoft Visual Studio, such as "Developer Command
+      Prompt for VS2015";
+      Type the command: "cd C:\MyWorkspace\edk2-platforms\Vlv2TbltDevicePkg";
+      Type command "Build_IFWI.bat MNW2 Debug" to build a debug version.
+
+   3) After the build successfully completes, the 8MB firmware binary image will
+      be located in the following location on your local hard drive:
+      "C:\MyWorkspace\edk2-platforms\Vlv2TbltDevicePkg\Stitch\"
+
+================================================================================
+4. HOW TO BUILD USING THE INTEL(R) FIRMWARE SUPPORT PACKAGE (INTEL(R) FSP)
+   (WINDOWS ENVIRONMENT, OPTIONAL)
+================================================================================
+
+    Note: this build is OPTIONAL and uses the Intel(R) FSP platform initialization
+     binary module instead of the binary integrated platform initialization code 
+     modules
+
+    NOTE: Both Intel(R) FSP and the binary integrated platform initialization
+          code modules are based upon UEFI/PI industry specification conformant
+          code.
+
+          Further details between Intel(R) FSP and the binary integrated platform
+          initialization code modules may be found at the end of these release notes.
+
+
+1. Download the Intel(R) Firmware Support Package (Intel(R) FSP) for the Intel(R)
+   Atom(tm) Processor E3800 Series (BAY_TRAIL_FSP_KIT.exe) from the following location:
+   https://downloadcenter.intel.com/download/23719
+
+   After downloading install BAY_TRAIL_FSP_KIT.exe in the "C:\temp" directory.
+   Follow the instructions provided by the installer. You must accept the license
+   agreement to successfully install Intel(R) FSP. Have the installer create the 
+   directory "BAY_TRAIL_FSP_KIT" on "C:\" (if you do not already have the directory).
+   When the installer completes, you will find the directory "C:\BAY_TRAIL_FSP_KIT"
+
+   Within the directory "C:\BAY_TRAIL_FSP_KIT" you will find another directory
+   titled "FSP" where there are two files that are required to build the MinnowBoard
+   MAX firmware using the Intel(R) FSP in a Windows system build environment. The
+   two files are:
+   "BAYTRAIL_FSP_GOLD_002_10-JANUARY-2014.fd" and 
+   "BayTrailFsp.bsf"
+
+2. Open the file "BayTrailFsp.bsf" in your text editor.
+
+3. Change each line in the file as follows (line numbers have been provided to assist
+   you in locating the line to change - do not add the line number as part of the
+   change)"
+
+   Line #     CHANGE THE TEXT TO READ:
+
+   24         SKUID = 1, "DEFAULT"
+   31         $gPlatformFspPkgTokenSpaceGuid_PcdMrcInitTsegSize        2 bytes $_DEFAULT_ = 0x0008
+   35         $gPlatformFspPkgTokenSpaceGuid_PcdeMMCBootMode           1 byte $_DEFAULT_  = 0
+   36         $gPlatformFspPkgTokenSpaceGuid_PcdEnableSdio             1 byte $_DEFAULT_  = 0
+   44         $gPlatformFspPkgTokenSpaceGuid_PcdEnableAzalia           1 byte $_DEFAULT_  = 1
+   45         $gPlatformFspPkgTokenSpaceGuid_AzaliaConfigPtr           4 bytes $_DEFAULT_  = 0xFFD08000
+   47         $gPlatformFspPkgTokenSpaceGuid_PcdEnableLpe              1 byte $_DEFAULT_  = 0
+   48         $gPlatformFspPkgTokenSpaceGuid_PcdLpssSioEnablePciMode   1 byte $_DEFAULT_  = 0
+   51         $gPlatformFspPkgTokenSpaceGuid_PcdEnableI2C0             1 byte $_DEFAULT_  = 0
+   52         $gPlatformFspPkgTokenSpaceGuid_PcdEnableI2C1             1 byte $_DEFAULT_  = 0
+   53         $gPlatformFspPkgTokenSpaceGuid_PcdEnableI2C2             1 byte $_DEFAULT_  = 0
+   54         $gPlatformFspPkgTokenSpaceGuid_PcdEnableI2C3             1 byte $_DEFAULT_  = 0
+   55         $gPlatformFspPkgTokenSpaceGuid_PcdEnableI2C4             1 byte $_DEFAULT_  = 0
+   70         $gPlatformFspPkgTokenSpaceGuid_PcdEnableSecureBoot       1 byte $_DEFAULT_  = 0
+   72         $DIMM_MemDown                                            1 byte $_DEFAULT_ = 1
+   73         $DRAM_Speed                                              1 byte $_DEFAULT_ = 1
+   77         $DIMM_DWidth_0_0                                         1 byte $_DEFAULT_ = 1
+   78         $DIMM_Density_0_0                                        1 byte $_DEFAULT_ = 2
+   81         $tCL                                                     1 byte $_DEFAULT_ = 7
+   82         $tRP_tRCD                                                1 byte $_DEFAULT_ = 7
+   83         $tWR                                                     1 byte $_DEFAULT_ = 8
+   84         $tWTR                                                    1 byte $_DEFAULT_ = 5
+   85         $tRRD                                                    1 byte $_DEFAULT_ = 6
+   86         $tRTP                                                    1 byte $_DEFAULT_ = 4
+   87         $tFAW                                                    1 byte $_DEFAULT_ = 28
+
+    Note: The values set for the terms defined above are for a 2 Gigabyte memory
+          configuration with a single or quad core. If your MinnowBoard MAX memory
+          type and size is different you must set the values correctly for your
+          memory type and size
+
+4. Download the Intel(R) Binary Configuration Tool (Intel(R) BCT) (revision 3.2)
+   from the following location:
+
+   https://downloadcenter.intel.com/download/23619
+
+   NOTE: The file name of the file which will be downloaded is "BCT-installer-3.2.exe"
+
+   After installing BCT, launch (open) the tool. Within the BCT tool, click
+   "Open BSF" button and choose the file "C:\BAY_TRAIL_FSP_KIT\FSP\BayTrailFsp.bsf"
+
+   Change the configuration as instructed in the steps below:
+
+   a) Select from the BCT menu bar "Binary Tools" followed by "Patch." Within the
+      pop-up insert the following text "C:\BAY_TRAIL_FSP_KIT\FSP\BAYTRAIL_FSP_GOLD_002_10-JANUARY-2014.fd"
+      in the text box labeled "Input binary file to patch"
+      Within the text box labeled "Output patched file" enter the following text:
+      "C:\MyWorkspace\silicon\Vlv2MiscBinariesPkg\FspBinary\FvFsp.bin"
+
+      Place a "check mark" in the  "Rebase binary at the following address (hex)"
+      checkbox.
+      Change the address from what is displayed (typically 0x0 or 0xfffc0000) to
+      0xFFCC0000.
+
+      Click "OK"
+
+      The patched FvFsp.bin file will be created.
+
+5. To enable the build to use Intel(R) FSP:
+
+   1) Open the file C:\MyWorkspace\edk2-platforms\Vlv2TbltDevicePkg\PlatformPkgConfig.dsc
+      in your editor
+   2) Modify the following:
+           Change "DEFINE MINNOW2_FSP_BUILD" macro from "FALSE" to "TRUE".
+           DEFINE MINNOW2_FSP_BUILD = TRUE
+
+       Where:
+      "TRUE" means FSP build enabled
+      "FALSE" means FSP build disabled
+
+6. Update MicrocodeUpdates.inf (Vlv2MiscBinariesPkg\Microcode) to make sure "M0130673321.inc"
+   as first definition in "sources.common" section, that is FSP binary (BAYTRAIL_FSP_GOLD_002_10-JANUARY-2014.fd)
+   limitation and known issue.
+
+7. Build the firmware binary image using Intel(r) FSP as follows for a Windows System
+   Configuration of Microsoft Windows 7 Ultimate 64-bit*
+
+
+   1. Setup Build Environment
+      1) Install C compiler Microsoft Visual Studio 2015 with Update 3 in the build machine
+
+         Note: Visual Studio VS2008, VS2010, VS2012 and VS2013 are also supported, but Intel only verify
+               with VS2015.
+
+      2) Obtain and install version Python 2.7.10 from: https://www.python.org/downloads/release/python-2710/
+         Make sure that a file with the extension of ".py" will be opened by Python.exe.
+
+      3) Install WINDDK 3790.1830 in the build machine.
+          
+   2. Extract Source Code
+      1) Follow the instructions of "HOW TO CREATE A FULL SOURCE TREE" (step 2 above)
+         to create a full source tree.
+
+      2) Follow the instructions found in the file "OpenSSL-HOWTO.txt" located in your
+         workspace (e.g. "C:\MyWorkspace\edk2\CryptoPkg\Library\OpensslLib\OpenSSL-HOWTO.txt")
+         to install the Openssl source code.
+
+   3. Install the iasl compiler by downloading iasl-win-20160527.zip from the
+      following location: "https://acpica.org/downloads/" and place
+      the unzipped content ("iasl.exe") into the directory "C:\ASL" on your local
+      hard drive (create the folder "C:\ASL" if it does not exist).
+
+   4. Build Steps
+      1) To build a release version
+         Open a command prompt of Microsoft Visual Studio, such as "Developer Command
+         Prompt for VS2015";
+         Type the command: "cd C:\MyWorkspace\edk2-platforms\Vlv2TbltDevicePkg" 
+         Type the command "Build_IFWI.bat MNW2 Release" to build a release version.
+
+      2) To build a debug version
+         Open a command prompt of Microsoft Visual Studio, such as "Developer Command
+         Prompt for VS2015";
+         Type the command: "cd C:\MyWorkspace\edk2-platforms\Vlv2TbltDevicePkg"
+         Type command "Build_IFWI.bat MNW2 Debug" to build a debug version.
+
+      3) After the build successfully completes, the 8MB firmware binary image will
+         be located in the following location on your local hard drive:
+         "C:\MyWorkspace\edk2-platforms\Vlv2TbltDevicePkg\Stitch\"
+
+================================================================================ 
+5.                        HOW TO BUILD (LINUX ENVIRONMENT)
+================================================================================
+
+Linux System Configuration:
+  Ubuntu 16.04.03 64 bit
+  GCC version: GCC 5.4
+
+1.  Setup Build Environment
+    1) Use below command to install required packages:
+      # sudo apt-get update
+      # sudo apt-get install build-essential
+      # sudo apt-get install uuid-dev
+      # sudo apt-get install git
+
+    2) For current GCC build, make sure the nasm tool version you installed is
+       "2.12.02" or newer.
+       i) Download nasm tool by downloading nasm-2.12.02.tar.gz from the
+          following location: "https://www.nasm.us/pub/nasm/releasebuilds/2.12.02/".
+         
+      ii) To generate and install the nasm tool in usr/bin
+          # sudo ./configure
+          # sudo make 
+          # sudo make install
+
+    3) For current GCC build, make sure the iasl tool version you installed is
+       "20170728" or newer.
+
+       i) Download ASL build tool by downloading acpia-unix-20170728.zip from the
+          following location: "https://acpica.org/downloads/".
+
+      ii) The requirements for generating ACPICA tools from source code are:
+          flex: version 2.5.4 or greater
+          bison: version 2.4.1 or greater
+          # sudo apt-get install bison flex
+
+     iii) To generate and install the iasl tool in usr/bin
+          # sudo make clean
+          # sudo make iasl
+          # sudo make install
+
+    4) update python to Python 2.7.13
+
+2. Extract Source Code
+   1) Follow the instructions of "HOW TO CREATE A FULL SOURCE TREE" (see 2 above)
+      to create a full source tree.
+
+   2) Follow the instructions found in the file "OpenSSL-HOWTO.txt" located in your
+      workspace (e.g. "~/src/MyWorkspace/edk2/CryptoPkg/Library/OpensslLib/OpenSSL-HOWTO.txt")
+      to install the Openssl source code.
+
+3. Build Steps
+   1) Make the required build script and binary as executable file:
+
+      # chmod +x ~/src/MyWorkspace/edk2/edksetup.sh
+      # chmod -R 777 ~/src/MyWorkspace/edk2/BaseTools/
+      # chmod +x ~/src/MyWorkspace/edk2-platforms/Vlv2TbltDevicePkg/bld_vlv.sh Build_IFWI.sh GenBiosId       
+
+   2) To build a release version
+      Open a command prompt, type command "cd ~/src/MyWorkspace/edk2-platforms/Vlv2TbltDevicePkg"
+      to enter your workspace directory, then type command ". Build_IFWI.sh MNW2
+      Release"
+
+   3) To build a debug version
+      Open a command prompt, type command "cd ~/src/MyWorkspace/edk2-platforms/Vlv2TbltDevicePkg"
+      to enter your workspace directory, then type command ". Build_IFWI.sh MNW2
+      Debug"
+
+   4) After the build successfully completes, the firmware binary image will be
+      located in the following location on your local hard drive:
+      "~/src/MyWorkspace/edk2-platforms/Vlv2TbltDevicePkg/Stitch/"
+
+================================================================================
+6.                             TEST ENVIRONMENT
+================================================================================
+1. Platforms: Minnowboard Turbot B21, Minnowboard Turbot Dual-E
+2. Storage Devices: SD card,
+                    USB drive,
+                    CD/DVD-ROM (USB Dell DP10N)
+                    SATA drive (Seagate 500G,Seagate 1.0TB)
+3. Display Devices: Benq EW2440(Mini HDMI to HDMI)
+                    ViewSonic VE1920wmb(Mini HDMI to DVI)
+                    HP ProDisplay P231(Mini HDMI to DVI)
+4. Input Devices: USB Keyboard and USB Mouse
+5. OS: Linux (Yocto build) version: 4.8.3
+   binary\core-image-sato-intel-corei7-64.hddimg image from
+   http://downloads.yoctoproject.org/releases/yocto/yocto-2.2/machines/intel-corei7-64/intel-corei7-64-6.0-morty-2.2.tar.bz2
+6. OS: Microsoft* Windows 10    
+   1) Windows10 32bit ISO
+      17134.1.180410-1804.rs4_release_CLIENT_BUSINESS_VOL_x86FRE_en-us.ISO
+      17134.1.180410-1804.rs4_release_amd64fre_IOTCORE_MBM.iso
+   2) Windows10 64bit ISO
+      17134.1.180410-1804.rs4_release_CLIENT_BUSINESS_VOL_x64FRE_en-us.ISO
+      
+================================================================================
+7.                SUPPORTED (NEW) FEATURES AND CHANGES IN RELEASE
+================================================================================
+1. The 64bit BIOS is now functional with Linux and Windows 8.1 Embedded/Windows 10.
+2. The 32bit BIOS is now functional with Windows 8.1 Embedded/Windows 10.
+3. Supports booting from "SD card", "USB drive" and "SATA".
+4. Supports S3 resume for Linux, Windows 8.1 Embedded and Windows 10.
+5. Supports S4 resume for Windows 8.1 Embedded and Windows 10.
+6. Supports 64bit image GCC build (32bit image GCC build is not supported).
+7. Update EDK II core from UDK2015 release to UDK2017.
+8. Signed Capsule Update is supported.
+9. Supports HTTP and HTTPS boot.
+10. Add board UUID support.
+11. Fixed the issue that USB device may not be detected at system power-on.
+12. Main changes in this release
+   1) Add microcode M0130679906 for D1 stepping.
+   2) Produce SMBIOS type 1.
+   3) Changed manufacture name.
+   4) Fixed some open bugs. Please visit the following link for details.
+      https://wiki.yoctoproject.org/wiki/Minnow_Bug_Triage
+
+================================================================================
+8.                                KNOWN ISSUES
+================================================================================
+1. UEFI Network Stack is not enabled for IA32 (32bit) image on MinnowBoard Turbot
+   2 using Intel I210/I211 network adapter. This network adapter does not have a
+   supported IA32 UEFI UNDI driver.
+2. The size of FvMain maybe not enough if set SOURCE_DEBUG_ENABLE=TRUE to enable
+   Source Level Debug. Please remove some unnecessary features to pass build.
+
+================================================================================
+9.                           SECURITY RECOMMENDATIONS
+================================================================================
+1. SPI Flash Descriptor Region and SEC Region Protection 
+   "/yL" build option is to disable CPU/BIOS access to SPI Flash Descriptor Region
+   and SEC Region.
+   1) Type the command: "cd C:\MyWorkspace\edk2-platforms\Vlv2TbltDevicePkg";
+      Type the command "Build_IFWI.bat /yL MNW2 Release" to build a release version.
+
+   2) Type the command: "cd C:\MyWorkspace\edk2-platforms\Vlv2TbltDevicePkg";
+      Type the command "Build_IFWI.bat /yL MNW2 Debug" to build a Debug version.
+
+   Note: With the protection enabled, the firmware update under uefi shell by using
+   FirmwareUpdateXXX.efi is unavailable, we can use only DediProg tool to update
+   firmware image in this case.
+
+2. SPI Flash BIOS Region Protection
+   The code for locking the SPI flash BIOS region (except UEFI Variable Region) is
+   controlled by BIOS Setup option "BIOS Read/Write Protection". The default value
+   of this BIOS Setup option is "Disabled". Intel recommends code users to change 
+   the default value to "Enable" and hide this BIOS Setup option.
+
+   Related Source Code: 
+
+   edk2-platforms\Vlv2TbltDevicePkg\PlatformSetupDxe\SouthClusterConfig.vfi
+
+   oneof varid = Setup.SpiRwProtect,
+     prompt         = STRING_TOKEN(STR_PCH_SPI_WP_PROMPT),
+     help           = STRING_TOKEN(STR_PCH_SPI_WP_HELP),
+     option text    = STRING_TOKEN(STR_PCH_SPI_WP_DISABLE), value = 0, flags = DEFAULT | MANUFACTURING |RESET_REQUIRED;
+     option text    = STRING_TOKEN(STR_PCH_SPI_WP_ENABLE), value = 1, flags = RESET_REQUIRED;
+   endoneof;
+
+   Note: With the protection enabled, the firmware update under uefi shell by using
+   FirmwareUpdateXXX.efi is unavailable, we can use only DediProg tool to update
+   firmware image in this case.
+
+================================================================================
+10.                HOW TO UPDATE THE PLATFORM BIOS FIRMWARE IMAGE
+================================================================================
+1. Instructions for updating the 64-bit BIOS image when executing within a 64-bit
+   environment:
+
+   1) Copy "FirmwareUpdateX64.efi" file to storage device (Sdcard, Udisk, or Sata)
+   2) Enter UEFI shell
+   3) Type the "fsX:" command under UEFI shell where the "fs" portion of the term
+      "fsX" is the term used for your storage device, and the "X" portion of the
+      term "fsX" is replaced by the index identifier of the storage device being
+      used (for example, fs0:).  
+   4) Type the following command to update 64bit bios image:
+
+      # FirmwareUpdateX64.efi  <TargetIA64BiosImageFileName>
+
+   5) The system will automatically shutdown after the update is complete.
+
+*-*-*-*-*-*-
+
+2. Instructions for updating the 32-bit BIOS image when executing within a 64-bit
+   environment:
+
+   1) Copy "FirmwareUpdateX64.efi" file to storage device (Sdcard, Udisk, or Sata)
+   2) Enter UEFI shell
+   3) Type the "fsX:" command under UEFI shell where the "fs" portion of the term
+      "fsX" is the term used for your storage device, and the "X" portion of the
+      term "fsX" is replaced by the index identifier of the storage device being
+      used (for example, fs0:).  
+   4) Type the following command to update 32-bit BIOS image:
+
+      # FirmwareUpdateX64.efi  <TargetIA32BiosImageFileName>
+
+   5) The system will automatically shutdown after the update has completed.
+
+*-*-*-*-*-*-
+
+3. Instructions for updating the 64-bit BIOS image when executing within a 32-bit
+   environment:
+
+   1) Copy "FirmwareUpdateIA32.efi" file to storage device (Sdcard, Udisk, or Sata)
+   2) Enter UEFI shell
+   3) Type the "fsX:" command under UEFI shell where the "fs" portion of the term
+      "fsX" is the term used for your storage device, and the "X" portion of the
+      term "fsX" is replaced by the index identifier of the storage device being
+      used (for example, fs0:).
+   4) Type the following command to update 64-bit BIOS image:
+
+      # FirmwareUpdateIA32.efi  <TargetX64BiosImageFileName>
+
+   5) The system will automatically shutdown after the update has completed.
+
+*-*-*-*-*-*-
+
+4. Instructions for updating the 32-bit BIOS image when executing within a 32-bit
+   environment:
+
+   1) Copy "FirmwareUpdateIA32.efi" file to storage device (Sdcard, Udisk, or Sata)
+   2) Enter UEFI shell
+   3) Type the "fsX:" command under UEFI shell where the "fs" portion of the term
+      "fsX" is the term used for your storage device, and the "X" portion of the
+      term "fsX" is replaced by the index identifier of the storage device being
+      used (for example, fs0:). 
+   4) Type the following command to update 32bit bios image:
+
+      # FirmwareUpdateIA32.efi  <TargetX32BiosImageFileName>
+
+   5) The system will automatically shutdown after the update has completed.  
+
+
+================================================================================
+11. HOW TO CONFIGURE THE PLATFORM FOR DIFFERENT OPTIONS
+================================================================================
+
+1. How to configure for Intel(R) Firmware Support Package (Intel(R) FSP) 
+   See Section 4.5. 
+
+2. How to configure memory parameters for new custom platforms
+   
+  If you want to configure memory parameters for your own platform, the following
+  steps must be done before building the source tree. 
+
+   (1)	Open the platform DSC file, which is <MyWorkspace>/edk2-platforms/Vlv2TbltDevicePkg/
+        PlatformPkgIA32.dsc or <MyWorkspace>/edk2-platforms/Vlv2TbltDevicePkg/PlatformPkgX64.dsc
+        depending on your which CPU architecture you prefer to support. 
+
+   (2)  Search in the platform DSC file for following PCDs. There are a total of
+        17 PCDs for memory parameter configuration.
+        Taking PCD "VlvRefCodePkgTokenSpaceGuid.PcdMemoryParameterPatchable|FALSE",
+        for example,  the string before "|" represents PCD name, while the string
+        after "|" represents configurable PCD value. 
+        And the comment, which is above the PCD and marked by #, provides the 
+        usage of the PCD and valid selectable values. 
+
+  ##############################################################################
+  #
+  # Begin of MRC parameters
+  #
+  
+  ## Memory Parameter Patchable.
+  #  FALSE - MRC Parameters are fixed for MinnowBoard Max<BR>
+  #  TRUE  - MRC Parameters are patchable by following PCDs<BR>
+  # @Prompt Memory Parameter Patchable.
+  # @ValidList 0x80000001 | 0, 1  
+  gVlvRefCodePkgTokenSpaceGuid.PcdMemoryParameterPatchable|FALSE
+
+  ## Memory Down or DIMM slot.
+  #  0 - DIMM<BR>
+  #  1 - Memory Down<BR>
+  # @Prompt Enable Memory Down
+  # @ValidList 0x80000001 | 0, 1
+  gVlvRefCodePkgTokenSpaceGuid.PcdEnableMemoryDown|1
+
+  ## The speed of DRAM.
+  #  0 - 800 MHz<BR>
+  #  1 - 1066 MHz<BR>
+  #  2 - 1333 MHz<BR>
+  #  3 - 1600 MHz<BR>
+  # @Prompt DRAM Speed
+  # @ValidList 0x80000001 | 0, 1, 2, 3
+  gVlvRefCodePkgTokenSpaceGuid.PcdDramSpeed|1
+
+  ## DRAM Type.
+  #  0 - DDR3<BR>
+  #  1 - DDR3L<BR>
+  #  2 - DDR3U<BR>
+  #  3 - DDR3All<BR>
+  #  4 - LPDDR2<BR>
+  #  5 - LPDDR3<BR>
+  #  6 - DDR4<BR>
+  # @Prompt DRAM Type
+  # @ValidList 0x80000001 | 0, 1, 2, 3, 4, 5, 6
+  gVlvRefCodePkgTokenSpaceGuid.PcdDramType|1
+
+  .
+  .
+  .
+
+  #
+  # End of MRC parameters.
+  # 
+  ##############################################################################
+
+   (3) Change the value of gVlvRefCodePkgTokenSpaceGuid.PcdMemoryParameterPatchable
+       to be TRUE before configuring any other PCDs, just like 
+       "VlvRefCodePkgTokenSpaceGuid.PcdMemoryParameterPatchable|TRUE"
+
+   (4) Change other PCD values according to the new memory parameters of your 
+       platform, with the help of the comments . For example, if your DRAM speed 
+       is 1600MHz, you should configure  the value of 
+       gVlvRefCodePkgTokenSpaceGuid.PcdDramSpeed to be 3, just like 
+       "VlvRefCodePkgTokenSpaceGuid.PcdDramSpeed|3"
+
+   (5) Run build command, such as "Build_IFWI MNW2 Debug" to build your source 
+       tree. The new BIOS image will support the new memory parameter.
+
+3. How to enable fTPM feature.   
+   1) Enable fTPM feature for IA32 firmware
+      Please follow these steps as below to turn on fTPM option in setup page:
+      i) Boot to uefi setup page 
+     ii) Run into the option "Device Manager" -> "System Setup" -> "Security
+         Configuration" -> "PTT", setup the option from "Disable" to "Enable".
+    iii) Save the setup option changes then reboot system.
+
+   2) Enable fTPM feature for X64 firmware with MSVS build.
+      Since the default build macro of fTPM is FALSE, need to turn on the fTPM
+      build macro then rebuild X64 firmware. 
+      i) Open MyWorkspace/edk2-platforms/Vlv2TbltDevicePkg/PlatformPkgX64.dsc
+     ii) Modified the following macro from "FALSE" to "TRUE" then rebuild X64
+         firmware.
+         DEFINE SEC_ENABLE = TRUE
+         DEFINE SEC_DEBUG_INFO_ENABLE = TRUE
+         DEFINE FTPM_ENABLE = TRUE
+
+   3) Enable fTPM feature for X64 firmware with GCC build.
+      Since the default build macro of fTPM is FALSE, need to turn on the fTPM
+      build macro then rebuild X64 firmware.
+      i) Open MyWorkspace/edk2-platforms/Vlv2TbltDevicePkg/PlatformPkgGccX64.dsc
+     ii) Modified the following macro from "FALSE" to "TRUE" then rebuild X64
+         firmware.
+         DEFINE SEC_ENABLE = TRUE
+         DEFINE SEC_DEBUG_INFO_ENABLE = TRUE
+         DEFINE FTPM_ENABLE = TRUE
+
+      After updating the new X64 firmware follow step 2) or step 3), still need
+      to follow these setups as below to turn on fTPM option in setup pages.
+      i) Boot to uefi setup page.
+     ii) Run into the option "Device Manager" -> "System Setup" -> "Security
+         Configuration" -> "PTT", setup the option from "Disable" to "Enable".
+    iii) Save the setup option changes then reboot system.
+
+   Note: The TrEE Physical Presence confirmation mechanism has been changed. The TPM
+         configuration change request is no longer visiable on graphic console.
+         The TPM configuration change request message is printed on UART serial port.
+         User could confirm the change request by:
+             Connect Pin 23 and Pin 1 (Ground) of Low Speed Expander to Reject.
+             Connect Pin 25 and Pin 1 (Ground) of Low Speed Expander to Accept.
+
+3. How to enable HTTP and HTTPS boot
+   i) Open MyWorkspace/edk2-platforms/Vlv2TbltDevicePkg/PlatformPkgConfig.dsc.
+   ii) Modified the following macro from "FALSE" to "TRUE" then rebuild:
+      DEFINE HTTP_BOOT_SUPPORT = TRUE
+      DEFINE NETWORK_TLS_ENABLE = TRUE
+
+   Note: If HTTP_BOOT_SUPPORT is set to TRUE, BDS module will be changed to 
+         "MdeModulePkg/Universal/BdsDxe/BdsDxe.inf" to support HTTP(S) boot. 
+         Some platform features supported by the default BDS, "IntelFrameworkModulePkg/Universal
+         /BdsDxe/BdsDxe.inf", have not been synchronized to "MdeModulePkg/Universal/BdsDxe/BdsDxe.inf" yet.
+
+================================================================================
+
+12. INTEL(R) FSP AND THE BINARY INTEGRATED PLATFORM INITIALIZATION CODE MODULES)
+
+================================================================================
+
+Intel(R) FSP has the advantage of being a single module with two entry points: the
+first at pre-memory initialization tone and the second at post-memory initialization)
+with the return from the second to the next stage of the platform firmware (whether
+UEFI based or not).
+
+The integrated platform initialization code modules are based upon a series of
+Intel binary modules put together to form PEI and DXE operations per the UEFI PI
+specifications.  There are not "entry points" as in Intel(R) FSP as the binary
+integrated platform initialization code modules are linked at build time, meaning,
+if the developer needed to add additional operations to the PI phase, they could
+simply add the code to the build between the modules provided.
+
+The formal release for MinnowBoard MAX makes use of the integrated PI code - it
+is the default build and that which is subjected to rigorous QA/Validation.
+
+Intel(R) FSP is an option provided but is not tested in the same rigor as the default
+build - it is subject to "unit test" only (testing performed within the development
+engineering environment). 
+
+================================================================================
+13.                                   MISCELLANEOUS
+================================================================================
+1. Virus scanned by McAfee VirusScan Enterprise 8.8.0, Virus Definitions 9077,
+   no virus detected.
+
+* Other names and brands may be claimed as the property of others.
+
+[END OF RELEASE NOTES]
